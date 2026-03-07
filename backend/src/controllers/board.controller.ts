@@ -5,6 +5,7 @@ import { Section } from '../models/Section';
 import { Card } from '../models/Card';
 import { Vote } from '../models/Vote';
 import { Comment } from '../models/Comment';
+import { Workspace } from '../models/Workspace';
 import {
   isWorkspaceMember,
   verifyBoardAccess,
@@ -98,14 +99,29 @@ export const getBoards = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    const boards = await Board.find({
-      workspaceId,
-      $or: [
+    const workspaceMember = await Workspace.findOne(
+      { _id: workspaceId, 'members.userId': userId },
+      { 'members.$': 1 }
+    ).lean();
+
+    const isGuest = workspaceMember?.members?.[0]?.role === 'GUEST';
+
+    const query: any = { workspaceId };
+
+    if (isGuest) {
+      query.$or = [
+        { createdBy: userId },     // Creator always sees it
+        { members: userId }        // Explicitly invited user
+      ];
+    } else {
+      query.$or = [
         { members: { $size: 0 } }, // Public to workspace
         { createdBy: userId },     // Creator always sees it
         { members: userId }        // Explicitly invited user
-      ]
-    })
+      ];
+    }
+
+    const boards = await Board.find(query)
       .populate('createdBy', USER_SELECT)
       .sort({ updatedAt: -1 })
       .lean();

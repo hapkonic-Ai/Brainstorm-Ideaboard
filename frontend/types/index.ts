@@ -20,7 +20,7 @@ export interface WorkspaceMember {
   id: string;
   workspaceId: string;
   userId: string;
-  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
   joinedAt: string;
   user: Pick<User, 'id' | 'name' | 'email' | 'avatar'>;
 }

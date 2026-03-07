@@ -45,8 +45,24 @@ export async function verifyBoardAccess(boardId: string, userId: string) {
   }
 
   // Fallback to standard workspace check for public workspace boards
-  const isMember = await isWorkspaceMember(board.workspaceId.toString(), userId);
-  return isMember ? board : null;
+  const workspaceIdStr = board.workspaceId.toString();
+
+  // Check if they are a member, and what their role is
+  const workspaceMember = await Workspace.findOne(
+    { _id: workspaceIdStr, 'members.userId': userId },
+    { 'members.$': 1 }
+  ).lean();
+
+  if (!workspaceMember || !workspaceMember.members || workspaceMember.members.length === 0) {
+    return null;
+  }
+
+  const role = workspaceMember.members[0].role;
+  if (role === 'GUEST') {
+    return null; // Guests are not allowed to access unrestricted public boards they aren't explicitly invited to
+  }
+
+  return board;
 }
 
 /** Verify a user has access to a section via board → workspace membership. Returns the section or null. */

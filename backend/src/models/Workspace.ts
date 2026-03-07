@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface IWorkspaceMember {
   userId: mongoose.Types.ObjectId;
-  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
   joinedAt: Date;
 }
 
@@ -18,7 +18,7 @@ export interface IWorkspace extends Document {
 const MemberSchema = new Schema<IWorkspaceMember>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    role: { type: String, enum: ['OWNER', 'ADMIN', 'MEMBER'], default: 'MEMBER' },
+    role: { type: String, enum: ['OWNER', 'ADMIN', 'MEMBER', 'GUEST'], default: 'MEMBER' },
     joinedAt: { type: Date, default: Date.now },
   },
   { _id: false }

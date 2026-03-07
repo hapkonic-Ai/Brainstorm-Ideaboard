@@ -147,7 +147,7 @@ export const acceptInvite = async (req: AuthRequest, res: Response): Promise<voi
             if (!isWorkspaceMember) {
                 workspace.members.push({
                     userId: new mongoose.Types.ObjectId(userId),
-                    role: 'MEMBER',
+                    role: 'GUEST',
                     joinedAt: new Date()
                 });
                 await workspace.save();
