@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit2, Check, X, MoreHorizontal, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit2, Check, X, MoreHorizontal, Copy, Trash2, UserPlus } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { boardApi } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 import { getSocket } from '@/lib/socket';
 import { UserPresence } from './UserPresence';
+import { BoardShareModal } from './BoardShareModal';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,9 +24,12 @@ interface BoardHeaderProps {
 
 export function BoardHeader({ boardId }: BoardHeaderProps) {
   const router = useRouter();
-  const { currentBoard, currentWorkspace, updateBoard, removeBoard } = useAppStore();
+  const { currentBoard, currentWorkspace, updateBoard, removeBoard, user } = useAppStore();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(currentBoard?.name || '');
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  const isCreator = currentBoard?.createdBy === user?.id || (currentBoard?.createdBy as any)?.id === user?.id;
 
   async function handleRename() {
     if (!newName.trim() || newName === currentBoard?.name) {
@@ -125,6 +129,12 @@ export function BoardHeader({ boardId }: BoardHeaderProps) {
 
       {/* Right: presence + actions */}
       <div className="flex items-center gap-3">
+        {isCreator && (
+          <Button size="sm" variant="outline" className="h-8 shadow-sm" onClick={() => setShowShareModal(true)}>
+            <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+            Invite
+          </Button>
+        )}
         <UserPresence />
 
         <DropdownMenu>
@@ -150,6 +160,8 @@ export function BoardHeader({ boardId }: BoardHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <BoardShareModal boardId={boardId} open={showShareModal} onOpenChange={setShowShareModal} />
     </header>
   );
 }

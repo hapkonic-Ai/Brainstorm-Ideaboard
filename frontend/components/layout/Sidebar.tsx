@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor, cn } from '@/lib/utils';
 import { CreateWorkspaceModal } from '@/components/workspace/CreateWorkspaceModal';
 import { CreateBoardModal } from '@/components/board/CreateBoardModal';
+import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
 import { Board } from '@/types';
 
 export function Sidebar() {
@@ -114,8 +115,8 @@ export function Sidebar() {
   return (
     <>
       <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col h-full">
-        {/* App logo */}
-        <div className="px-4 py-4 border-b border-gray-100">
+        {/* App logo & Notifications */}
+        <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center">
               <span className="text-white text-sm font-bold">B</span>
@@ -125,6 +126,7 @@ export function Sidebar() {
               <p className="text-xs text-gray-400">Collaborative ideation</p>
             </div>
           </div>
+          <NotificationsMenu />
         </div>
 
         {/* Workspace selector */}

@@ -55,22 +55,22 @@ export const createBoard = async (req: AuthRequest, res: Response): Promise<void
     const sectionsToCreate =
       templateType === 'custom'
         ? (customSections || []).map((s: { name: string; color?: string }, i: number) => ({
-            name: s.name,
-            color: s.color || '#94A3B8',
-            position: i,
-          }))
+          name: s.name,
+          color: s.color || '#94A3B8',
+          position: i,
+        }))
         : (TEMPLATE_SECTIONS[templateType] || []).map((s, i) => ({
-            name: s.name,
-            color: s.color,
-            position: i,
-          }));
+          name: s.name,
+          color: s.color,
+          position: i,
+        }));
 
     const board = await Board.create({ workspaceId, name, templateType, createdBy: userId });
 
     const sections = sectionsToCreate.length
       ? await Section.insertMany(
-          sectionsToCreate.map((s: any) => ({ ...s, boardId: board._id }))
-        )
+        sectionsToCreate.map((s: any) => ({ ...s, boardId: board._id }))
+      )
       : [];
 
     await board.populate('createdBy', USER_SELECT);
@@ -98,7 +98,14 @@ export const getBoards = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    const boards = await Board.find({ workspaceId })
+    const boards = await Board.find({
+      workspaceId,
+      $or: [
+        { members: { $size: 0 } }, // Public to workspace
+        { createdBy: userId },     // Creator always sees it
+        { members: userId }        // Explicitly invited user
+      ]
+    })
       .populate('createdBy', USER_SELECT)
       .sort({ updatedAt: -1 })
       .lean();

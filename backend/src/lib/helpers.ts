@@ -28,11 +28,23 @@ export async function isWorkspaceMember(
   return !!exists;
 }
 
-/** Verify a user has access to a board via workspace membership. Returns the board or null. */
+/** Verify a user has access to a board via workspace membership or direct board invite. Returns the board or null. */
 export async function verifyBoardAccess(boardId: string, userId: string) {
   if (!mongoose.isValidObjectId(boardId)) return null;
   const board = await Board.findById(boardId);
   if (!board) return null;
+
+  // If the board has restricted members, check if user is in the list
+  if (board.members && board.members.length > 0) {
+    const isExplicitMember = board.members.some(m => m.toString() === userId);
+    const isCreator = board.createdBy.toString() === userId;
+    if (isExplicitMember || isCreator) {
+      return board;
+    }
+    return null; // Restricted board, and user is not in it
+  }
+
+  // Fallback to standard workspace check for public workspace boards
   const isMember = await isWorkspaceMember(board.workspaceId.toString(), userId);
   return isMember ? board : null;
 }
