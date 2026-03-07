@@ -10,7 +10,7 @@ import { useSocket } from '@/hooks/useSocket';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { setUser, setToken, token } = useAppStore();
+  const { setUser, setToken } = useAppStore();
 
   // Initialize socket listeners
   useSocket();
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setToken(storedToken);
       connectSocket(storedToken);
     }
-  }, []);
+  }, [router, setToken, setUser]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

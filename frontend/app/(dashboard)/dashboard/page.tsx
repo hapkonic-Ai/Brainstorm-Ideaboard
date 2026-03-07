@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { workspaceApi } from '@/lib/api';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { workspaces, currentWorkspace, setWorkspaces, setCurrentWorkspace } = useAppStore();
+  const { currentWorkspace, setWorkspaces, setCurrentWorkspace } = useAppStore();
 
   useEffect(() => {
     workspaceApi.getAll().then((res) => {
@@ -19,7 +19,7 @@ export default function DashboardPage() {
         router.replace(`/workspace/${first.id}`);
       }
     });
-  }, []);
+  }, [currentWorkspace, router, setCurrentWorkspace, setWorkspaces]);
 
   return (
     <div className="flex-1 flex items-center justify-center">
