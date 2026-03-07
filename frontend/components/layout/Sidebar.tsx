@@ -12,6 +12,8 @@ import {
   Link2,
   Copy,
   Check,
+  Trash2,
+  MoreVertical,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { workspaceApi, boardApi } from '@/lib/api';
@@ -38,6 +40,7 @@ export function Sidebar() {
     setBoards,
     setUser,
     setToken,
+    removeWorkspace,
   } = useAppStore();
 
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
@@ -110,6 +113,28 @@ export function Sidebar() {
     }
   }
 
+  async function handleDeleteWorkspace(wsId: string, wsName: string) {
+    if (!window.confirm(`Are you sure you want to delete the workspace "${wsName}"? All boards, sections, and cards will be permanently destroyed. This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await workspaceApi.delete(wsId);
+      toast({ title: 'Workspace deleted.' });
+      removeWorkspace(wsId);
+
+      const remainingWorkspaces = workspaces.filter(w => w.id !== wsId);
+      if (remainingWorkspaces.length > 0) {
+        setCurrentWorkspace(remainingWorkspaces[0]);
+        router.push(`/workspace/${remainingWorkspaces[0].id}`);
+      } else {
+        router.push('/');
+      }
+    } catch (err: any) {
+      toast({ title: err.response?.data?.error || 'Failed to delete workspace', variant: 'destructive' });
+    }
+  }
+
   const activeBoardId = pathname.match(/\/board\/([^/]+)/)?.[1];
 
   return (
@@ -146,26 +171,40 @@ export function Sidebar() {
 
           {/* Workspace list */}
           <div className="space-y-1">
-            {workspaces.map((ws) => (
-              <button
-                key={ws.id}
-                onClick={() => { setCurrentWorkspace(ws); router.push(`/workspace/${ws.id}`); }}
-                className={cn(
-                  'w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-colors text-left',
-                  currentWorkspace?.id === ws.id
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
-                )}
-              >
-                <div
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{ backgroundColor: getAvatarColor(ws.name) }}
-                >
-                  {ws.name[0].toUpperCase()}
+            {workspaces.map((ws) => {
+              const isOwner = ws.members?.find((m: any) => m.userId === user?.id)?.role === 'OWNER';
+              const isActive = currentWorkspace?.id === ws.id;
+
+              return (
+                <div key={ws.id} className={cn(
+                  'group flex items-center justify-between px-2 py-2 rounded-lg text-sm transition-colors',
+                  isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+                )}>
+                  <button
+                    onClick={() => { setCurrentWorkspace(ws); router.push(`/workspace/${ws.id}`); }}
+                    className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ backgroundColor: getAvatarColor(ws.name) }}
+                    >
+                      {ws.name[0].toUpperCase()}
+                    </div>
+                    <span className={cn('truncate', isActive && 'font-medium')}>{ws.name}</span>
+                  </button>
+
+                  {isOwner && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteWorkspace(ws.id, ws.name); }}
+                      className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all shrink-0"
+                      title="Delete workspace"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
-                <span className="truncate">{ws.name}</span>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 

@@ -23,6 +23,7 @@ interface AppState {
   setWorkspaces: (workspaces: Workspace[]) => void;
   addWorkspace: (workspace: Workspace) => void;
   updateWorkspace: (workspace: Workspace) => void;
+  removeWorkspace: (workspaceId: string) => void;
   setCurrentWorkspace: (workspace: Workspace | null) => void;
 
   // ─── Boards ────────────────────────────────────────────────────────────────
@@ -92,6 +93,13 @@ export const useAppStore = create<AppState>()(
           currentWorkspace:
             s.currentWorkspace?.id === workspace.id ? workspace : s.currentWorkspace,
         })),
+      removeWorkspace: (workspaceId) =>
+        set((s) => ({
+          workspaces: s.workspaces.filter((w) => w.id !== workspaceId),
+          currentWorkspace: s.currentWorkspace?.id === workspaceId ? null : s.currentWorkspace,
+          boards: s.currentWorkspace?.id === workspaceId ? [] : s.boards,
+          currentBoard: s.currentWorkspace?.id === workspaceId ? null : s.currentBoard,
+        })),
       setCurrentWorkspace: (currentWorkspace) => set({ currentWorkspace }),
 
       // ─── Boards ────────────────────────────────────────────────────────────
@@ -152,9 +160,9 @@ export const useAppStore = create<AppState>()(
           sections: s.sections.map((sec) =>
             sec.id === card.sectionId
               ? {
-                  ...sec,
-                  cards: sec.cards.map((c) => (c.id === card.id ? card : c)),
-                }
+                ...sec,
+                cards: sec.cards.map((c) => (c.id === card.id ? card : c)),
+              }
               : sec
           ),
         })),

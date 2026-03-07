@@ -49,6 +49,7 @@ export const workspaceApi = {
   getAll: () => api.get('/workspaces'),
   getOne: (id: string) => api.get(`/workspaces/${id}`),
   update: (id: string, data: { name: string }) => api.put(`/workspaces/${id}`, data),
+  delete: (id: string) => api.delete(`/workspaces/${id}`),
   join: (inviteCode: string) => api.post('/workspaces/join', { inviteCode }),
 };
 

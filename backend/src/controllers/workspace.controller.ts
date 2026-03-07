@@ -2,6 +2,12 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import { User } from '../models/User';
 import { Workspace } from '../models/Workspace';
+import { Board } from '../models/Board';
+import { Section } from '../models/Section';
+import { Card } from '../models/Card';
+import { Vote } from '../models/Vote';
+import { Comment } from '../models/Comment';
+import { BoardInvitation } from '../models/BoardInvitation';
 import { AuthRequest } from '../types';
 
 async function populateMembers(workspace: any) {
@@ -81,4 +87,37 @@ export const updateWorkspace = async (req: AuthRequest, res: Response): Promise<
     await workspace.save();
     res.json({ workspace: await populateMembers(workspace) });
   } catch { res.status(500).json({ error: 'Internal server error' }); }
+};
+
+export const deleteWorkspace = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+
+    if (!mongoose.isValidObjectId(id)) { res.status(404).json({ error: 'Not found' }); return; }
+
+    const workspace = await Workspace.findOne({ _id: id, 'members.userId': new mongoose.Types.ObjectId(userId) });
+    if (!workspace) { res.status(403).json({ error: 'Access denied' }); return; }
+
+    const member = workspace.members.find((m) => m.userId.toString() === userId);
+    if (!member || member.role !== 'OWNER') { res.status(403).json({ error: 'Only the workspace owner can delete it' }); return; }
+
+    // Cascading delete
+    const boards = await Board.find({ workspaceId: id }).distinct('_id');
+    const sections = await Section.find({ boardId: { $in: boards } }).distinct('_id');
+    const cards = await Card.find({ sectionId: { $in: sections } }).distinct('_id');
+
+    await Comment.deleteMany({ cardId: { $in: cards } });
+    await Vote.deleteMany({ cardId: { $in: cards } });
+    await Card.deleteMany({ sectionId: { $in: sections } });
+    await Section.deleteMany({ boardId: { $in: boards } });
+    await BoardInvitation.deleteMany({ boardId: { $in: boards } });
+    await Board.deleteMany({ workspaceId: id });
+    await Workspace.findByIdAndDelete(id);
+
+    res.json({ message: 'Workspace deleted successfully' });
+  } catch (err) {
+    console.error('Delete workspace error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
