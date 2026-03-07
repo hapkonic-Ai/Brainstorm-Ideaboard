@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { api } from '@/lib/api';
+import { api, workspaceApi } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ export function NotificationsMenu() {
     const [invites, setInvites] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+    const { setWorkspaces } = useAppStore();
 
     async function fetchInvites() {
         try {
@@ -45,6 +46,14 @@ export function NotificationsMenu() {
             // Remove invite from list
             const invite = invites.find(i => i.id === inviteId);
             setInvites(invites.filter(i => i.id !== inviteId));
+
+            // Refresh workspaces to sync new workspace access
+            try {
+                const wsRes = await workspaceApi.getAll();
+                setWorkspaces(wsRes.data.workspaces);
+            } catch (wsErr) {
+                console.error('Failed to refresh workspaces:', wsErr);
+            }
 
             // Optionally route them to the new board
             if (invite?.board) {
