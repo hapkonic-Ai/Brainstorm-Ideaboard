@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { api } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,9 @@ export function BoardShareModal({ boardId, open, onOpenChange }: BoardShareModal
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Share "{currentBoard?.name}"</DialogTitle>
+                    <DialogDescription className="hidden">
+                        Invite team members via email to access this board.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
