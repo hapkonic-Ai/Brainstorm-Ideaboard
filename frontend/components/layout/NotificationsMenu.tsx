@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
@@ -16,8 +15,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
+interface Invite {
+    id: string;
+    inviter?: { name: string; avatar?: string };
+    board?: { id: string; name: string };
+}
+
 export function NotificationsMenu() {
-    const [invites, setInvites] = useState<any[]>([]);
+    const [invites, setInvites] = useState<Invite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
     const { setWorkspaces } = useAppStore();
@@ -44,8 +49,8 @@ export function NotificationsMenu() {
             toast({ title: 'Invitation accepted!' });
 
             // Remove invite from list
-            const invite = invites.find(i => i.id === inviteId);
-            setInvites(invites.filter(i => i.id !== inviteId));
+            const invite = invites.find((i) => i.id === inviteId);
+            setInvites(invites.filter((i) => i.id !== inviteId));
 
             // Refresh workspaces to sync new workspace access
             try {
@@ -59,8 +64,13 @@ export function NotificationsMenu() {
             if (invite?.board) {
                 router.push(`/board/${invite.board.id}`);
             }
-        } catch (err: any) {
-            toast({ title: err.response?.data?.error || 'Failed to accept invite', variant: 'destructive' });
+        } catch (e: unknown) {
+            if (e && typeof e === 'object' && 'response' in e) {
+                const err = e as { response?: { data?: { error?: string } } };
+                toast({ title: err.response?.data?.error || 'Failed to accept invite', variant: 'destructive' });
+            } else {
+                toast({ title: 'Failed to accept invite', variant: 'destructive' });
+            }
         }
     }
 
@@ -68,8 +78,8 @@ export function NotificationsMenu() {
         try {
             await api.post(`/boards/invites/${inviteId}/decline`);
             toast({ title: 'Invitation declined' });
-            setInvites(invites.filter(i => i.id !== inviteId));
-        } catch (err) {
+            setInvites(invites.filter((i) => i.id !== inviteId));
+        } catch {
             toast({ title: 'Failed to decline invite', variant: 'destructive' });
         }
     }
@@ -104,7 +114,7 @@ export function NotificationsMenu() {
                     ) : invites.length === 0 ? (
                         <div className="p-6 text-center text-sm text-gray-500 bg-gray-50/50 flex flex-col items-center">
                             <Bell className="h-6 w-6 text-gray-300 mb-2 opacity-50" />
-                            You're all caught up!
+                            You&apos;re all caught up!
                         </div>
                     ) : (
                         <div className="flex flex-col">
@@ -119,7 +129,7 @@ export function NotificationsMenu() {
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-gray-900 leading-tight">
-                                                <span className="font-semibold">{invite.inviter?.name}</span> invited you to edit <span className="font-semibold">"{invite.board?.name}"</span>
+                                                <span className="font-semibold">{invite.inviter?.name}</span> invited you to edit <span className="font-semibold">&quot;{invite.board?.name}&quot;</span>
                                             </p>
                                             <p className="text-xs text-gray-500 mt-1">Just now</p>
 
