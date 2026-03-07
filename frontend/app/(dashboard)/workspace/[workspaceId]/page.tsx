@@ -14,11 +14,19 @@ import {
   Zap,
   Scale,
   Sparkles,
+  Settings,
+  Trash2
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { workspaceApi, boardApi } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CreateBoardModal } from '@/components/board/CreateBoardModal';
 import { Board } from '@/types';
 import { formatDate, cn } from '@/lib/utils';
@@ -42,7 +50,7 @@ export default function WorkspacePage() {
   const workspaceId = params.workspaceId as string;
   const router = useRouter();
 
-  const { currentWorkspace, setCurrentWorkspace, workspaces, boards, setBoards } = useAppStore();
+  const { user, currentWorkspace, setCurrentWorkspace, workspaces, setWorkspaces, boards, setBoards } = useAppStore();
   const [showCreateBoard, setShowCreateBoard] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -54,7 +62,7 @@ export default function WorkspacePage() {
     boardApi.getByWorkspace(workspaceId).then((res) => {
       setBoards(res.data.boards);
     }).finally(() => setLoading(false));
-  }, [workspaceId]);
+  }, [workspaceId, setBoards, setCurrentWorkspace, workspaces]);
 
   async function copyInviteLink() {
     const workspace = currentWorkspace || workspaces.find((w) => w.id === workspaceId);
@@ -66,7 +74,41 @@ export default function WorkspacePage() {
     setTimeout(() => setCopiedInvite(false), 2000);
   }
 
+  async function handleDeleteWorkspace() {
+    const workspace = currentWorkspace || workspaces.find((w) => w.id === workspaceId);
+    if (!window.confirm(`Are you sure you want to delete the workspace "${workspace?.name}"? All boards, sections, and cards will be permanently removed.`)) {
+      return;
+    }
+    try {
+      await workspaceApi.delete(workspaceId);
+      toast({ title: 'Workspace deleted successfully' });
+      const newWorkspaces = workspaces.filter(w => w.id !== workspaceId);
+      setWorkspaces(newWorkspaces);
+      if (newWorkspaces.length > 0) {
+        setCurrentWorkspace(newWorkspaces[0]);
+        router.push(`/workspace/${newWorkspaces[0].id}`);
+      } else {
+        setCurrentWorkspace(null);
+        router.push('/dashboard');
+      }
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'response' in e) {
+        const err = e as { response?: { data?: { error?: string } } };
+        toast({ title: err.response?.data?.error || 'Failed to delete workspace', variant: 'destructive' });
+      } else {
+        toast({ title: 'Failed to delete workspace', variant: 'destructive' });
+      }
+    }
+  }
+
   const workspace = currentWorkspace || workspaces.find((w) => w.id === workspaceId);
+  const handleMemberCheck = (m: unknown) => {
+    if (m && typeof m === 'object' && 'userId' in m && 'role' in m) {
+      return (m as { userId: string, role: string }).userId === user?.id && (m as { role: string }).role === 'OWNER';
+    }
+    return false;
+  };
+  const isOwner = workspace?.members?.find(handleMemberCheck) || workspace?.createdBy === user?.id;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -100,6 +142,22 @@ export default function WorkspacePage() {
               <Plus className="h-4 w-4 mr-2" />
               New Board
             </Button>
+
+            {isOwner && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleDeleteWorkspace} className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Workspace
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>

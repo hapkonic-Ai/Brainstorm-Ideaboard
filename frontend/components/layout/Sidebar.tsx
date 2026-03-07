@@ -5,15 +5,12 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
   LayoutGrid,
   Plus,
-  Settings,
   LogOut,
   ChevronDown,
   ChevronRight,
   Link2,
-  Copy,
   Check,
   Trash2,
-  MoreVertical,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { workspaceApi, boardApi } from '@/lib/api';
@@ -25,6 +22,7 @@ import { getInitials, getAvatarColor, cn } from '@/lib/utils';
 import { CreateWorkspaceModal } from '@/components/workspace/CreateWorkspaceModal';
 import { CreateBoardModal } from '@/components/board/CreateBoardModal';
 import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
+import { ProfileSettingsModal } from '@/components/layout/ProfileSettingsModal';
 import { Board } from '@/types';
 
 export function Sidebar() {
@@ -45,6 +43,7 @@ export function Sidebar() {
 
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [workspaceExpanded, setWorkspaceExpanded] = useState(true);
   const [copiedInvite, setCopiedInvite] = useState(false);
 
@@ -56,7 +55,7 @@ export function Sidebar() {
         setCurrentWorkspace(res.data.workspaces[0]);
       }
     });
-  }, []);
+  }, [currentWorkspace, setCurrentWorkspace, setWorkspaces]);
 
   // Load boards when workspace changes
   useEffect(() => {
@@ -64,7 +63,7 @@ export function Sidebar() {
     boardApi.getByWorkspace(currentWorkspace.id).then((res) => {
       setBoards(res.data.boards);
     });
-  }, [currentWorkspace?.id]);
+  }, [currentWorkspace, setBoards]);
 
   function handleLogout() {
     clearAuth();
@@ -130,8 +129,13 @@ export function Sidebar() {
       } else {
         router.push('/');
       }
-    } catch (err: any) {
-      toast({ title: err.response?.data?.error || 'Failed to delete workspace', variant: 'destructive' });
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'response' in e) {
+        const err = e as { response?: { data?: { error?: string } } };
+        toast({ title: err.response?.data?.error || 'Failed to delete workspace', variant: 'destructive' });
+      } else {
+        toast({ title: 'Failed to delete workspace', variant: 'destructive' });
+      }
     }
   }
 
@@ -172,7 +176,12 @@ export function Sidebar() {
           {/* Workspace list */}
           <div className="space-y-1">
             {workspaces.map((ws) => {
-              const isOwner = ws.members?.find((m: any) => m.userId === user?.id)?.role === 'OWNER';
+              const isOwner = ws.members?.find((m: unknown) => {
+                if (m && typeof m === 'object' && 'userId' in m && 'role' in m) {
+                  return (m as { userId: string, role: string }).userId === user?.id && (m as { role: string }).role === 'OWNER';
+                }
+                return false;
+              });
               const isActive = currentWorkspace?.id === ws.id;
 
               return (
@@ -286,19 +295,24 @@ export function Sidebar() {
         {/* User profile */}
         <div className="px-3 py-3 border-t border-gray-200">
           <div className="flex items-center gap-2.5">
-            <Avatar className="h-8 w-8">
-              {user?.avatar ? <AvatarImage src={user.avatar} /> : null}
-              <AvatarFallback
-                className="text-xs font-semibold text-white"
-                style={{ backgroundColor: getAvatarColor(user?.name || '') }}
-              >
-                {getInitials(user?.name || '?')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-            </div>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="flex items-center gap-2.5 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                {user?.avatar ? <AvatarImage src={user.avatar} /> : null}
+                <AvatarFallback
+                  className="text-xs font-semibold text-white"
+                  style={{ backgroundColor: getAvatarColor(user?.name || '') }}
+                >
+                  {getInitials(user?.name || '?')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+              </div>
+            </button>
             <button
               onClick={handleLogout}
               className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
@@ -311,6 +325,7 @@ export function Sidebar() {
       </aside>
 
       <CreateWorkspaceModal open={showCreateWorkspace} onOpenChange={setShowCreateWorkspace} />
+      <ProfileSettingsModal open={showProfileModal} onOpenChange={setShowProfileModal} />
       {currentWorkspace && (
         <CreateBoardModal
           workspaceId={currentWorkspace.id}

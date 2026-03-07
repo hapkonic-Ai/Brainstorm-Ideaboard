@@ -42,6 +42,12 @@ export const authApi = {
   me: () => api.get('/auth/me'),
 };
 
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+export const userApi = {
+  updateProfile: (data: { name?: string; avatar?: string }) => api.put('/users/me', data),
+};
+
 // ─── Workspaces ───────────────────────────────────────────────────────────────
 
 export const workspaceApi = {
