@@ -9,7 +9,7 @@ import { serialize, serializeAll, USER_PROJECTION } from '../lib/helpers';
 
 export const createInvite = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { boardId } = req.params;
+        const boardId = req.params.id;
         const { inviteeId } = req.body;
         const inviterId = req.user!.userId;
 
