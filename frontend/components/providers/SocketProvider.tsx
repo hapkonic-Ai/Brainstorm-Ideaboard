@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
-import { connectSocket, disconnectSocket } from '@/lib/socket';
+import { connectSocket } from '@/lib/socket';
 import { useSocket } from '@/hooks/useSocket';
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {

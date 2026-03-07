@@ -11,7 +11,7 @@ const PUBLIC_PATHS = ['/login', '/register'];
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { setUser, setToken, user } = useAppStore();
+  const { setUser, setToken } = useAppStore();
 
   useEffect(() => {
     const token = getStoredToken();
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login');
       }
     }
-  }, []);
+  }, [pathname, router, setToken, setUser]);
 
   return <>{children}</>;
 }
