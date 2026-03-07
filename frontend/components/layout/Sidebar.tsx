@@ -73,10 +73,40 @@ export function Sidebar() {
   async function copyInviteLink() {
     if (!currentWorkspace) return;
     const url = `${window.location.origin}/join?code=${currentWorkspace.inviteCode}`;
-    await navigator.clipboard.writeText(url);
-    setCopiedInvite(true);
-    toast({ title: 'Invite link copied!' });
-    setTimeout(() => setCopiedInvite(false), 2000);
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for non-HTTPS environments (especially on mobile)
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        // Make the textarea out of viewport
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error("Fallback: Oops, unable to copy", err);
+          toast({ title: 'Failed to copy link. Please manually copy it: ' + url, variant: 'destructive' });
+          document.body.removeChild(textArea);
+          return;
+        }
+        document.body.removeChild(textArea);
+      }
+
+      setCopiedInvite(true);
+      toast({ title: 'Invite link copied!' });
+      setTimeout(() => setCopiedInvite(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      toast({ title: 'Failed to copy link. Please try again.', variant: 'destructive' });
+    }
   }
 
   const activeBoardId = pathname.match(/\/board\/([^/]+)/)?.[1];
