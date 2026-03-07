@@ -78,6 +78,10 @@ export const getMyInvites = async (req: AuthRequest, res: Response): Promise<voi
         // Clean up populated fields for the frontend
         const serializedInvites = invites.map(invite => {
             const i = serialize(invite) as any;
+            if (i._id) {
+                i.id = i._id.toString();
+                delete i._id;
+            }
             if (i.boardId) {
                 i.board = { id: i.boardId._id.toString(), name: i.boardId.name };
                 delete i.boardId;
@@ -100,6 +104,11 @@ export const acceptInvite = async (req: AuthRequest, res: Response): Promise<voi
     try {
         const { inviteId } = req.params;
         const userId = req.user!.userId;
+
+        if (!mongoose.isValidObjectId(inviteId)) {
+            res.status(400).json({ error: 'Invalid invitation ID' });
+            return;
+        }
 
         const invite = await BoardInvitation.findOne({
             _id: inviteId,
@@ -156,6 +165,11 @@ export const declineInvite = async (req: AuthRequest, res: Response): Promise<vo
     try {
         const { inviteId } = req.params;
         const userId = req.user!.userId;
+
+        if (!mongoose.isValidObjectId(inviteId)) {
+            res.status(400).json({ error: 'Invalid invitation ID' });
+            return;
+        }
 
         const invite = await BoardInvitation.findOne({
             _id: inviteId,
