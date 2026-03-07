@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, ThumbsUp, Trash2, X, Edit2, Check } from 'lucide-react';
 import { Card, Comment } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
@@ -32,11 +32,7 @@ export function CardModal({ card, boardId, onClose }: CardModalProps) {
   const cardComments = comments[card.id] || [];
   const hasVoted = card.votes?.some((v) => v.userId === user?.id);
 
-  useEffect(() => {
-    loadComments();
-  }, [card.id]);
-
-  async function loadComments() {
+  const loadComments = useCallback(async () => {
     setLoadingComments(true);
     try {
       const res = await commentApi.getByCard(card.id);
@@ -46,7 +42,11 @@ export function CardModal({ card, boardId, onClose }: CardModalProps) {
     } finally {
       setLoadingComments(false);
     }
-  }
+  }, [card.id, setComments]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
 
   async function handleSaveEdit() {
     if (!editContent.trim() || editContent === card.content) {
@@ -215,11 +215,10 @@ export function CardModal({ card, boardId, onClose }: CardModalProps) {
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Votes</h3>
             <button
               onClick={handleVote}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
-                hasVoted
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${hasVoted
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-200 hover:border-blue-300 text-gray-600 hover:text-blue-600'
-              }`}
+                }`}
             >
               <ThumbsUp className={`h-4 w-4 ${hasVoted ? 'fill-blue-500' : ''}`} />
               <span>{card.votesCount} vote{card.votesCount !== 1 ? 's' : ''}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -85,7 +85,7 @@ export function BoardView({ boardId }: BoardViewProps) {
     return () => {
       socket?.emit('board:leave', { boardId });
     };
-  }, [boardId]);
+  }, [boardId, setSections]);
 
   const sectionIds = sections.map((s) => s.id);
 

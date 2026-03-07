@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ThumbsUp, MessageSquare, GripVertical, MoreHorizontal } from 'lucide-react';
+import { ThumbsUp, MessageSquare, GripVertical } from 'lucide-react';
 import { Card } from '@/types';
 import { useAppStore } from '@/store/useAppStore';
 import { getInitials, getAvatarColor, cn } from '@/lib/utils';
