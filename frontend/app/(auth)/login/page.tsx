@@ -35,13 +35,24 @@ export default function LoginPage() {
       setToken(token);
       connectSocket(token);
 
-      router.push('/dashboard');
-    } catch (err: any) {
-      toast({
-        title: 'Login failed',
-        description: err?.response?.data?.error || 'Invalid credentials',
-        variant: 'destructive',
-      });
+      const joinCode = sessionStorage.getItem('joinCode');
+      if (joinCode) {
+        sessionStorage.removeItem('joinCode');
+        router.push(`/join?code=${joinCode}`);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'response' in e) {
+        const err = e as { response?: { data?: { error?: string } } };
+        toast({
+          title: 'Login failed',
+          description: err.response?.data?.error || 'Invalid credentials',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Login failed', description: 'Invalid credentials', variant: 'destructive' });
+      }
     } finally {
       setLoading(false);
     }

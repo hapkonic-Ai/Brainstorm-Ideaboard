@@ -41,13 +41,24 @@ export default function RegisterPage() {
       connectSocket(token);
 
       toast({ title: `Welcome aboard, ${user.name}!` });
-      router.push('/dashboard');
-    } catch (err: any) {
-      toast({
-        title: 'Registration failed',
-        description: err?.response?.data?.error || 'Something went wrong',
-        variant: 'destructive',
-      });
+      const joinCode = sessionStorage.getItem('joinCode');
+      if (joinCode) {
+        sessionStorage.removeItem('joinCode');
+        router.push(`/join?code=${joinCode}`);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'response' in e) {
+        const err = e as { response?: { data?: { error?: string } } };
+        toast({
+          title: 'Registration failed',
+          description: err.response?.data?.error || 'Something went wrong',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Registration failed', description: 'Something went wrong', variant: 'destructive' });
+      }
     } finally {
       setLoading(false);
     }
