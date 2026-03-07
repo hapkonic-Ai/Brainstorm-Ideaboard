@@ -29,7 +29,7 @@ export function BoardHeader({ boardId }: BoardHeaderProps) {
   const [newName, setNewName] = useState(currentBoard?.name || '');
   const [showShareModal, setShowShareModal] = useState(false);
 
-  const isCreator = currentBoard?.createdBy === user?.id || (currentBoard?.createdBy as any)?.id === user?.id;
+  const isCreator = currentBoard?.createdBy === user?.id || (currentBoard?.createdBy as { id?: string })?.id === user?.id;
 
   async function handleRename() {
     if (!newName.trim() || newName === currentBoard?.name) {

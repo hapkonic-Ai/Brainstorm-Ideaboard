@@ -18,7 +18,7 @@ interface BoardShareModalProps {
 export function BoardShareModal({ boardId, open, onOpenChange }: BoardShareModalProps) {
     const [emailSearch, setEmailSearch] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<{ id: string; name: string; email: string; avatar?: string }[]>([]);
     const { currentBoard } = useAppStore();
 
     async function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
@@ -49,9 +49,14 @@ export function BoardShareModal({ boardId, open, onOpenChange }: BoardShareModal
             setEmailSearch('');
             setSearchResults([]);
             onOpenChange(false);
-        } catch (err: any) {
-            const message = err.response?.data?.error || 'Failed to send invitation';
-            toast({ title: message, variant: 'destructive' });
+        } catch (e: unknown) {
+            if (e && typeof e === 'object' && 'response' in e) {
+                const err = e as { response?: { data?: { error?: string } } };
+                const message = err.response?.data?.error || 'Failed to send invitation';
+                toast({ title: message, variant: 'destructive' });
+            } else {
+                toast({ title: 'Failed to send invitation', variant: 'destructive' });
+            }
         }
     }
 
@@ -59,7 +64,7 @@ export function BoardShareModal({ boardId, open, onOpenChange }: BoardShareModal
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Share "{currentBoard?.name}"</DialogTitle>
+                    <DialogTitle>Share &quot;{currentBoard?.name}&quot;</DialogTitle>
                     <DialogDescription className="hidden">
                         Invite team members via email to access this board.
                     </DialogDescription>
